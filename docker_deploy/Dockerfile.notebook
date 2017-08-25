@@ -16,26 +16,30 @@ RUN apt-get update && \
 # Do the pip installs as the unprivileged notebook user
 USER jovyan
 
+RUN pip install -U pip
+
 # Install dashboard layout and preview within Jupyter Notebook
 ARG DASHBOARDS_VER
-RUN pip install "jupyter_dashboards==$DASHBOARDS_VER" && \
+RUN pip install "jupyter_dashboards$DASHBOARDS_VER" && \
 	jupyter dashboards quick-setup --sys-prefix
 
 # Install declarative widgets for Jupyter Notebook
 ARG DECLWIDGETS_VER
-RUN pip install "jupyter_declarativewidgets==$DECLWIDGETS_VER" && \
+RUN pip install "jupyter_declarativewidgets$DECLWIDGETS_VER" && \
 	jupyter declarativewidgets quick-setup --sys-prefix
 
 # Install content management to support dashboard bundler options
 ARG CMS_VER
-ARG BUNDLER_VER
-RUN pip install "jupyter_cms==$CMS_VER" && \
+RUN pip install "jupyter_cms$CMS_VER" && \
 	jupyter cms quick-setup --sys-prefix
-RUN pip install "jupyter_dashboards_bundlers==$BUNDLER_VER" && \
-	jupyter dashboards_bundlers quick-setup --sys-prefix
+
+ARG BUNDLER_VER
+RUN pip install "jupyter_dashboards_bundlers$BUNDLER_VER" && \
+    jupyter bundlerextension enable --sys-prefix --py dashboards_bundlers && \
+
 
 # Put a couple sample notebooks into the notebook server
 RUN wget -O $HOME/work/hello_world.ipynb https://gist.githubusercontent.com/parente/bd6789c4a3533fab8085/raw/c5a8e9be2213650332889178b15cf899a844694f/hello_world.ipynb
-RUN wget -O $HOME/work/meetup-streaming.ipynb https://raw.githubusercontent.com/jupyter-incubator/dashboards/master/etc/notebooks/stream_demo/meetup-streaming.ipynb
+#RUN wget -O $HOME/work/meetup-streaming.ipynb https://raw.githubusercontent.com/jupyter/dashboards/master/etc/notebooks/stream_demo/meetup-streaming.ipynb
 
 # Stay as jovyan in the newer docker stack images
