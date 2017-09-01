@@ -1,20 +1,37 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-FROM jupyter/pyspark-notebook:8015c88c4b11
-
+FROM jupyter/base-notebook:b17be6205231
 RUN pip install -U pip
+
+#### DECLARATIVE WIDGETS #####
+# Install declarative widgets for Jupyter Notebook
+# IPywidgets 4.1.x and 5.1.1+ (R and Scala support not available for 5.0.0 nor 5.1.0)
+#  Bower, git - Necessary for installing 3rd party elements straight out of notebook
+USER root
+RUN apt-get update && \
+		apt-get install -y curl && \
+		curl --silent --location https://deb.nodesource.com/setup_0.12 | sudo bash - && \
+		apt-get install --yes nodejs git && \
+		npm install -g bower
+USER jovyan
+
+RUN pip install pandas
+
+ARG IPYWIDGETS_VER
+RUN pip install "ipywidgets${IPYWIDGETS_VER}" && \
+    jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
+ARG DECLWIDGETS_VER
+RUN pip install "jupyter_declarativewidgets$DECLWIDGETS_VER" && \
+	jupyter declarativewidgets quick-setup --sys-prefix
+
 
 ARG JUPYTER_KERNEL_GATEWAY_VER
 RUN pip install "jupyter_kernel_gateway$JUPYTER_KERNEL_GATEWAY_VER"
 
-ARG IPYWIDGETS_VER
-RUN pip install "ipywidgets$IPYWIDGETS_VER"
-
-# install Declarative Widgets python package
-# don't bother activating the extension, not needed outside notebook
-ARG DECLWIDGETS_VER
-RUN pip install "jupyter_declarativewidgets$DECLWIDGETS_VER"
+#Perhaps the kernel needs these
+RUN pip install -U matplotlib==1.5.* seaborn bokeh==0.11.* plotly==1.9.* sklearn
 
 # run kernel gateway, not notebook server
 CMD ["jupyter", "kernelgateway", "--KernelGatewayApp.ip=0.0.0.0"]

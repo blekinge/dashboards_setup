@@ -1,45 +1,69 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-# Pin to a known release for sanity
-FROM jupyter/pyspark-notebook:8015c88c4b11
+FROM jupyter/base-notebook:b17be6205231
+# Use this to parse https://github.com/jupyter/docker-stacks/wiki/Docker-build-history
+# https://github.com/jupyter/docker-stacks/tree/b17be62052318fbbaf786389b7c3df6b550df383
 
-# Become root to do the apt-gets
 USER root
+RUN apt-get update && apt-get install -y git
 
+USER jovyan
+
+RUN pip install -U pip
+
+
+#### NOTEBOOK #####
+ARG JUPYTER_VER
+RUN pip install notebook${JUPYTER_VER}
+
+
+#### DASHBOARD ####
+# Install dashboard layout and preview within Jupyter Notebook
+ARG DASHBOARDS_VER
+RUN pip install "jupyter_dashboards${DASHBOARD_VER}" && \
+	jupyter dashboards quick-setup --sys-prefix
+
+
+#### DECLARATIVE WIDGETS #####
+# Install declarative widgets for Jupyter Notebook
+USER root
 RUN apt-get update && \
 		apt-get install -y curl && \
 		curl --silent --location https://deb.nodesource.com/setup_0.12 | sudo bash - && \
 		apt-get install --yes nodejs && \
 		npm install -g bower
 
-# Do the pip installs as the unprivileged notebook user
 USER jovyan
 
-RUN pip install -U pip
+RUN pip install pandas
 
-# Install dashboard layout and preview within Jupyter Notebook
-ARG DASHBOARDS_VER
-RUN pip install "jupyter_dashboards$DASHBOARDS_VER" && \
-	jupyter dashboards quick-setup --sys-prefix
+ARG IPYWIDGETS_VER
+RUN pip install "ipywidgets${IPYWIDGETS_VER}" && \
+    jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
-# Install declarative widgets for Jupyter Notebook
 ARG DECLWIDGETS_VER
 RUN pip install "jupyter_declarativewidgets$DECLWIDGETS_VER" && \
 	jupyter declarativewidgets quick-setup --sys-prefix
 
+#### CMS ######
 # Install content management to support dashboard bundler options
 ARG CMS_VER
-RUN pip install "jupyter_cms$CMS_VER" && \
+RUN pip install "jupyter_cms${CMS_VER}" && \
 	jupyter cms quick-setup --sys-prefix
 
+#### BUNDLER ####
+# jupyter_cms>=0.5.0 for bundling options
+#  jupyter_dashboards>=0.4.0 for local deploy and download options
 ARG BUNDLER_VER
-RUN pip install "jupyter_dashboards_bundlers$BUNDLER_VER" && \
-    jupyter bundlerextension enable --sys-prefix --py dashboards_bundlers && \
+RUN pip install "jupyter_dashboards_bundlers${BUNDLER_VER}" && \
+    jupyter dashboards_bundlers quick-setup --sys-prefix
 
+RUN pip install -U matplotlib==1.5.* seaborn bokeh==0.11.* plotly==1.9.* sklearn
 
-# Put a couple sample notebooks into the notebook server
+## Put a couple sample notebooks into the notebook server
 RUN wget -O $HOME/work/hello_world.ipynb https://gist.githubusercontent.com/parente/bd6789c4a3533fab8085/raw/c5a8e9be2213650332889178b15cf899a844694f/hello_world.ipynb
-#RUN wget -O $HOME/work/meetup-streaming.ipynb https://raw.githubusercontent.com/jupyter/dashboards/master/etc/notebooks/stream_demo/meetup-streaming.ipynb
+
+#RUN wget -O $HOME/work/meetup-streaming.ipynb https://raw.githubusercontent.com/jupyter/dashboards/master/etc/notebooks/declarativewidgets/stream_demo/meetup-streaming.ipynb
 
 # Stay as jovyan in the newer docker stack images

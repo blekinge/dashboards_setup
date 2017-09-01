@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 ---
+
 version: "2"
 
 services:
@@ -9,11 +10,26 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.notebook
-#      args:
+      args:
         # pip versioning:
-#        DASHBOARDS_VER: '==0.6.*'
-#        DECLWIDGETS_VER: '==0.7.*'
-#        BUNDLER_VER: '==0.8.*'
+        JUPYTER_VER: '==4.2.*' # https://github.com/jupyter/notebook/tree/4.2.x
+
+        # https://github.com/jupyter-incubator/contentmanagement/tree/0.6.x
+        CMS_VER: '==0.6.*' # 0.7+ require notebook 5.0
+
+        # https://github.com/jupyter/dashboards/tree/0.7.x
+        DASHBOARDS_VER: '==0.6.*'
+
+        # https://github.com/jupyter-widgets/declarativewidgets/tree/0.7.x
+        DECLWIDGETS_VER: '==0.7.*' # This is newest
+
+        # https://github.com/jupyter-widgets/ipywidgets/tree/5.x
+        IPYWIDGETS_VER: '==5.*'
+
+        # https://github.com/jupyter-incubator/dashboards_bundlers/tree/0.8.x
+        BUNDLER_VER: '==0.8.*' # 0.9+ require notebook 5.0
+          # jupyter_cms>=0.5.0 for bundling options
+          # jupyter_dashboards>=0.4.0 for local deploy and download options
     ports:
       - "8888:8888"
     depends_on:
@@ -31,9 +47,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dashboards
-#      args:
+      args:
           # npm versioning:
-#          DASHBOARDS_SERVER_VER: '@>=0.7.0 <0.8.0'
+          DASHBOARDS_SERVER_VER: '@>=0.8.0 ' #https://github.com/jupyter-incubator/dashboards_server/blob/master/CHANGELOG.md
+
+#          jupyter_dashboards 0.6.x
+#          jupyter_dashboards_bundlers 0.8.x
+#          ipywidgets 5.2.x
+#          jupyter_declarativewidgets 0.6.x
+#          matplotlib 1.5.x
+#          Bokeh 0.11.x
+#          Plotly 1.9.x
     ports:
       - "3000:3000"
     depends_on:
@@ -50,11 +74,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.kernel
-#      args:
+      args:
         # pip versioning:
-#        JUPYTER_KERNEL_GATEWAY_VER: '==0.5.1'
-#        IPYWIDGETS_VER: '==5.1.*'
-#        DECLWIDGETS_VER: '==0.7.*'
+        # https://github.com/jupyter/kernel_gateway/tree/1.2.x
+        JUPYTER_KERNEL_GATEWAY_VER: '==1.2.*'
+        # https://github.com/jupyter-widgets/ipywidgets/tree/5.x
+        IPYWIDGETS_VER: '==5.*'
+        # https://github.com/jupyter-widgets/declarativewidgets/tree/0.7.x
+        DECLWIDGETS_VER: '==0.7.*'
     environment:
       KG_ALLOW_ORIGIN: '*'
     restart: always
